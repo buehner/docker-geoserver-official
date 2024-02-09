@@ -3,5 +3,7 @@
     "extends": [
         "config:recommended"
     ],
-    "repositories": ["buehner/docker-geoserver-official"]
+    "repositories": ["buehner/docker-geoserver-official"],
+    "platform": "github",
+    "onboarding": false
 }
