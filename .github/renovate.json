@@ -3,5 +3,6 @@
     "extends": [
         "config:recommended",
         "docker:pinDigests"
-    ]
+    ],
+    "repositories": ["buehner/docker-geoserver-official"]
 }
