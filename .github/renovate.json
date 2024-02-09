@@ -4,5 +4,6 @@
         "config:recommended",
         "docker:pinDigests"
     ],
-    "repositories": ["buehner/docker-geoserver-official"]
+    "autodiscover": true,
+    "autodiscoverFilter":  ["buehner/docker-geoserver-official"]
 }
