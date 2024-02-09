@@ -5,6 +5,5 @@
         "docker:pinDigests"
     ],
     "repositories": ["buehner/docker-geoserver-official"],
-    "platform": "github",
-    "onboarding": false
+    "platform": "github"
 }
