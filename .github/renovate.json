@@ -1,22 +1,11 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
-        "config:recommended",
-        "docker:pinDigests"
+        "config:best-practices"
     ],
     "forkProcessing": "enabled",
     "autodiscover": true,
     "autodiscoverFilter": [
         "buehner/docker-geoserver-official"
-    ],
-    "packageRules": [
-        {
-            "matchUpdateTypes": [
-                "minor",
-                "patch",
-                "pin",
-                "digest"
-            ]
-        }
     ]
 }
