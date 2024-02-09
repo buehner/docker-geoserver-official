@@ -1,7 +1,11 @@
 name: Renovate
 on:
-  schedule:
-    - cron: '0 5 * * *'
+  push:
+    branches:
+      - master
+      - 'renovate-*'
+#   schedule:
+#     - cron: '0 5 * * *'
 jobs:
   renovate:
     runs-on: ubuntu-latest
