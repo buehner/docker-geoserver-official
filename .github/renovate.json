@@ -4,6 +4,7 @@
         "config:recommended",
         "docker:pinDigests"
     ],
+    "forkProcessing": "enabled",
     "autodiscover": true,
     "autodiscoverFilter":  ["buehner/docker-geoserver-official"]
 }
