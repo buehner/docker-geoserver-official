@@ -1,17 +1,31 @@
 #!/bin/bash
 echo "Welcome to GeoServer $GEOSERVER_VERSION"
 
+# Filter that strips the PostgreSQL JNDI <Resource> block from stdin unless
+# POSTGRES_JNDI_ENABLED is "true". The block is wrapped in
+# <!-- POSTGRES_JNDI_RESOURCE_BEGIN --> ... <!-- POSTGRES_JNDI_RESOURCE_END -->
+# markers in the default server.xml / server-https.xml templates. Applying the
+# filter before envsubst ensures that credentials (e.g. POSTGRES_JNDI_PASSWORD)
+# are never substituted into the rendered file when JNDI is disabled.
+function maybe_strip_jndi_resource() {
+  if [ "${POSTGRES_JNDI_ENABLED}" = "true" ]; then
+    cat
+  else
+    sed '/POSTGRES_JNDI_RESOURCE_BEGIN/,/POSTGRES_JNDI_RESOURCE_END/d'
+  fi
+}
+
 # function that can be used to copy a custom config file to the catalina conf dir
 function copy_custom_config() {
   CONFIG_FILE=$1
   # Use a custom "${CONFIG_FILE}" if the user mounted one into the container
   if [ -d "${CONFIG_OVERRIDES_DIR}" ] && [ -f "${CONFIG_OVERRIDES_DIR}/${CONFIG_FILE}" ]; then
     echo "Installing configuration override for ${CONFIG_FILE} with substituted environment variables"
-    envsubst < "${CONFIG_OVERRIDES_DIR}"/"${CONFIG_FILE}" > "${CATALINA_HOME}/conf/${CONFIG_FILE}"
+    maybe_strip_jndi_resource < "${CONFIG_OVERRIDES_DIR}"/"${CONFIG_FILE}" | envsubst > "${CATALINA_HOME}/conf/${CONFIG_FILE}"
   elif [ -f "${CONFIG_DIR}/${CONFIG_FILE}" ]; then
     # Otherwise use the default if it exists
     echo "Installing default ${CONFIG_FILE} with substituted environment variables"
-    envsubst < "${CONFIG_DIR}"/"${CONFIG_FILE}" > "${CATALINA_HOME}/conf/${CONFIG_FILE}"
+    maybe_strip_jndi_resource < "${CONFIG_DIR}"/"${CONFIG_FILE}" | envsubst > "${CATALINA_HOME}/conf/${CONFIG_FILE}"
 
     # since autodeploy is disabled by default, we need to enable it if the user has not provided a custom server.xml
     if [ "${CONFIG_FILE}" = "server.xml" ] && [ "${ROOT_WEBAPP_REDIRECT}" = "true" ] && [ "${WEBAPP_CONTEXT}" != "" ]; then
@@ -197,15 +211,7 @@ if [ "${HTTPS_ENABLED}" = "true" ]; then
     exit 1
   fi
   echo "Installing [${CATALINA_HOME}/conf/server.xml] with HTTPS support using substituted environment variables"
-  envsubst < "${CONFIG_DIR}"/server-https.xml > "${CATALINA_HOME}/conf/server.xml"
-fi
-
-# Strip the PostgreSQL JNDI <Resource> block from server.xml unless JNDI is
-# explicitly enabled. The block is wrapped in
-# <!-- POSTGRES_JNDI_RESOURCE_BEGIN --> ... <!-- POSTGRES_JNDI_RESOURCE_END -->
-# markers in the default server.xml / server-https.xml templates.
-if [ "${POSTGRES_JNDI_ENABLED}" != "true" ]; then
-  sed -i '/POSTGRES_JNDI_RESOURCE_BEGIN/,/POSTGRES_JNDI_RESOURCE_END/d' "$CATALINA_HOME/conf/server.xml"
+  maybe_strip_jndi_resource < "${CONFIG_DIR}"/server-https.xml | envsubst > "${CATALINA_HOME}/conf/server.xml"
 fi
 
 # start the tomcat
