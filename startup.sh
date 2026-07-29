@@ -99,7 +99,7 @@ total_count=$((ttf_count + ttc_count))
 if [ -d "$ADDITIONAL_FONTS_DIR" ] && [ $total_count != 0 ]; then
     [ "$ttf_count" -gt 0 ] && cp "$ADDITIONAL_FONTS_DIR"/*.ttf /usr/share/fonts/truetype/
     [ "$ttc_count" -gt 0 ] && cp "$ADDITIONAL_FONTS_DIR"/*.ttc /usr/share/fonts/truetype/
-    
+
     echo "Installed $total_count ttf/ttc font file(s) from the additional fonts folder"
 fi
 
@@ -173,11 +173,6 @@ if [ "${CORS_ENABLED}" = "true" ]; then
   fi
 fi
 
-if [ "${POSTGRES_JNDI_ENABLED}" = "true" ]; then
-  # Use a custom "context.xml" if the user mounted one into the container
-  copy_custom_config "context.xml"
-fi
-
 # Use a custom "server.xml" if the user mounted one into the container
 copy_custom_config "server.xml"
 
@@ -203,6 +198,14 @@ if [ "${HTTPS_ENABLED}" = "true" ]; then
   fi
   echo "Installing [${CATALINA_HOME}/conf/server.xml] with HTTPS support using substituted environment variables"
   envsubst < "${CONFIG_DIR}"/server-https.xml > "${CATALINA_HOME}/conf/server.xml"
+fi
+
+# Strip the PostgreSQL JNDI <Resource> block from server.xml unless JNDI is
+# explicitly enabled. The block is wrapped in
+# <!-- POSTGRES_JNDI_RESOURCE_BEGIN --> ... <!-- POSTGRES_JNDI_RESOURCE_END -->
+# markers in the default server.xml / server-https.xml templates.
+if [ "${POSTGRES_JNDI_ENABLED}" != "true" ]; then
+  sed -i '/POSTGRES_JNDI_RESOURCE_BEGIN/,/POSTGRES_JNDI_RESOURCE_END/d' "$CATALINA_HOME/conf/server.xml"
 fi
 
 # start the tomcat
